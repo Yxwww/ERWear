@@ -44,7 +44,7 @@
     <Reference Include="System.Core" />
     <Reference Include="Mono.Android" />
     <Reference Include="Xamarin.Google.Glass">
-      <HintPath>..\..\..\lib\android\Xamarin.Google.Glass.dll</HintPath>
+      <HintPath>..\..\..\..\..\Downloads\WearTest\Components\googleglass-22.0.0\lib\android\Xamarin.Google.Glass.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

@@ -7,7 +7,7 @@ namespace SoD_Xamarin_AndroidLibrary
 {
 	public class SoD
 	{
-		SocketIO socket;	
+		public SocketIO socket;	
 		public AndroidDeviceType deviceType;
 		public SoD (string host,int port, AndroidDeviceType type)
 		{	
@@ -19,7 +19,6 @@ namespace SoD_Xamarin_AndroidLibrary
 			var connectionStatus = await socket.ConnectAsync ();
 
 			if (connectionStatus == SocketIO.ConnectionStatus.Connected) {
-				//registerAsAndroidWatch ();
 				switch (this.deviceType) {
 				case AndroidDeviceType.Glass:
 					registerAsGoogleGlass ();
@@ -61,9 +60,25 @@ namespace SoD_Xamarin_AndroidLibrary
 					stationary = false
 				} });
 		}
+		public void sendUpdate(int personID,float heartbeat){
+			Console.WriteLine (personID+" - "+heartbeat);
+			socket.Emit ("ERPersonUpdate", new Object[]{new ERPersonUpdateEncap(){
+					heartbeat = heartbeat,
+					personID = personID
+			}
+			});
+		}
 	}
 
+	[JsonObject(MemberSerialization.OptIn)]
+	public class ERPersonUpdateEncap
+	{
+		[JsonProperty]
+		public float heartbeat { get; set;} 
+		[JsonProperty]
+		public int personID { get; set;} 
 
+	}
 	[JsonObject(MemberSerialization.OptIn)]
 	public class AndroidWatch: AndroidWear
 	{
@@ -80,6 +95,7 @@ namespace SoD_Xamarin_AndroidLibrary
 		[JsonProperty]
 		public bool stationary {get;set;}
 	}
+
 	[JsonObject(MemberSerialization.OptIn)]
 	public class GoogleGlass: AndroidWear
 	{
