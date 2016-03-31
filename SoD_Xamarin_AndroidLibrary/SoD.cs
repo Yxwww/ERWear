@@ -17,7 +17,6 @@ namespace SoD_Xamarin_AndroidLibrary
 		}
 		public async void register(){
 			var connectionStatus = await socket.ConnectAsync ();
-
 			if (connectionStatus == SocketIO.ConnectionStatus.Connected) {
 				switch (this.deviceType) {
 				case AndroidDeviceType.Glass:
@@ -34,6 +33,9 @@ namespace SoD_Xamarin_AndroidLibrary
 			} else {
 				Console.WriteLine ("Websocket failed to connect to the server");
 			}
+		}
+		public void disconnect(){
+			this.socket.Disconnect();
 		}
 		public void test(){
 			//var list = new object [] { 1, "randomString", 3.4f, new Foo () { Bar = "baz"} };

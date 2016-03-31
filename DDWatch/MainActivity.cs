@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 using Android.App;
 using Android.Content;
@@ -24,7 +26,7 @@ using SoD_Xamarin_AndroidLibrary;
 namespace DDWatch
 {
 	[Activity (Label = "DDWatch", MainLauncher = true, Icon = "@mipmap/icon")]
-	public class MainActivity : Activity,ISensorEventListener
+	public class MainActivity : Activity,ISensorEventListener,ILocationListener
 	{
 		//int count = 1;
 		public SoD SoD;
@@ -46,17 +48,15 @@ namespace DDWatch
 		{
 			base.OnCreate (bundle);
 
-			// Marker: Socket 		
-
-
 			// Set our view from the "main" layout resource
 			SetContentView (Resource.Layout.Main);
 
 			// MARK: Setup sensor + Location
 			sensor_manager = (SensorManager)GetSystemService (Context.SensorService);
 			sensor =  sensor_manager.GetDefaultSensor (SensorType.HeartRate);
-			InitializeLocationManager();
+			//InitializeLocationManager();
 
+			// UI Delegate
 			var v = FindViewById<WatchViewStub> (Resource.Id.watch_view_stub);
 			button = FindViewById<Button> (Resource.Id.myButton);
 
@@ -107,38 +107,28 @@ namespace DDWatch
 		protected override void OnResume ()
 		{
 			base.OnResume ();
-			//Reconnect SoD
+			LOG ("starting up !");
+			// Location
+			InitializeLocationManager();
+			_locationManager.RequestLocationUpdates(_locationProvider, 0, 0, this);
+			// SoD
 			this.SoD = new SoD (serverIP,3000,AndroidDeviceType.Watch);
+			// Pulse Thread
 			s = new TimerExampleState();
 			TimerCallback timerCallback = new TimerCallback (readHRData);
-			s = new TimerExampleState();
 			Timer timer = new Timer (timerCallback, s,1000 , 1000);
 			s.tmr = timer;
-
-			/*if (sensor_manager.RegisterListener (this, sensor, SensorDelay.Normal)) {
-				Log.Info (tag, "Successfully registered for heartrate events");
-				Console.WriteLine ("Successfully registered for the heartrate events");
-			} else {
-				Log.Info (tag, "something is wrong with reading Heartrate sensor");
-				Console.WriteLine ("something is wrong with reading heartrate sensors");
-			}*/
-
-			/*while (s.tmr != null)
-				Thread.Sleep(0);
-			Console.WriteLine("Timer example done.");*/
 		}
 
 
 
 		void readHRData(Object state){
-			//TimerExampleState s = (TimerExampleState) state;
-			//s.counter++;
-			//Console.WriteLine("{0} Checking Status {1}.",DateTime.Now.TimeOfDay, s.counter);
 			TimerExampleState s = (TimerExampleState) state;
 			s.counter++;
 			Console.WriteLine("{0} Checking Status {1}.",DateTime.Now.TimeOfDay, s.counter);
-			if (s.counter == 5) {
-				SoD.sendUpdate (117,currentHearBeat);
+			// get data of interest
+			SoD.sendUpdate (117,currentHearBeat);
+			if (s.counter == 5){
 				//Console.WriteLine("disposing of timer...");
 				if (sensor_manager.RegisterListener (this, sensor, SensorDelay.Normal)) {
 					Log.Info (tag, "Successfully registered for heartrate events");
@@ -150,7 +140,6 @@ namespace DDWatch
 					Console.WriteLine ("something is wrong with reading heartrate sensors");
 				}
 				Console.WriteLine ("5");
-
 			}
 			if (s.counter == 10) {
 				Log.Info (tag, "Unregister HeartRate sensor");
@@ -161,77 +150,112 @@ namespace DDWatch
 				// reset counter 
 				s.counter = 0;
 				Console.WriteLine ("10");
-				//s.tmr.Dispose();
-				//s.tmr = null;
 			}
-
-
-
-			/*
-			if(sensor!=null){
-				if (sensor_manager.RegisterListener (this, sensor, SensorDelay.Normal)) {
-					Log.Info (tag, "Successfully registered for heartrate events");
-					Console.WriteLine ("Successfully registered for the heartrate events");
-					Thread.Sleep (5000);	// hang on for 5 seconds 
-					//Console.WriteLine("{0} Checking Status {1}.\n",DateTime.Now.TimeOfDay, s.counter);
-					Log.Info (tag, "Unregister HeartRate sensor");
-					Console.WriteLine ("Unregister HeartRate sensor");
-					sensor_manager.UnregisterListener (this);
-					Log.Info (tag, "______");
-					Console.WriteLine ("______");
-				} else {
-					Log.Info (tag, "something is wrong with reading Heartrate sensor");
-					Console.WriteLine ("something is wrong with reading heartrate sensors");
-				}
-			}*/
 		}
 
 		protected override void OnPause ()
 		{
 			base.OnPause ();
+			// Thread
+			s.tmr.Dispose();
+			s.tmr = null;
+			// SOD
+			this.SoD.disconnect();
+			// Location
+			_locationManager.RemoveUpdates(this);
+			// Heartrate
 			sensor_manager.UnregisterListener (this);
 			Console.WriteLine ("Unregistered for sensor events");
 			Log.Info (tag, "Unregistered for sensor events");
 			s.tmr.Dispose();
 			s.tmr = null;
-			/*if (Log.IsLoggable (TAG, LogPriority.Debug)) {
-				Log.Debug (TAG, "Unregistered for sensor events");
-			}*/
 		}
 
 		private float[] array = new float[0];
 		public float currentHearBeat = 0;
 		public void OnSensorChanged(SensorEvent e)
 		{
-			/*lock (_syncLock)
-			{*/
-				Log.Info (tag, e.Values [0] + " - " +(int)e.Timestamp);
-				Console.WriteLine (String.Join("-",array) + " - " + (int)e.Timestamp);
-				if (e.Values [0] != currentHearBeat) {
-					currentHearBeat = e.Values [0];
-					button.Text = currentHearBeat.ToString();
-					//TODO: Send to SoD
-					SoD.sendUpdate (117,90);
-				}
-			//}
+			Log.Info (tag, e.Values [0] + " - " +(int)e.Timestamp);
+			Console.WriteLine (String.Join("-",array) + " - " + (int)e.Timestamp);
+			if (e.Values [0] != currentHearBeat) {
+				currentHearBeat = e.Values [0];
+				button.Text = currentHearBeat.ToString();
+
+			}
 		}
 
 		public void OnAccuracyChanged(Sensor sensor,int accuracy)
 		{
-
+			
 		}
 
 		public void OnAccuracyChanged(Sensor sensor, SensorStatus status)
 		{
 
 		}
-		
 
+		// MARK: Location delegates
+		public async void OnLocationChanged(Location location) {
+			_currentLocation = location;
+			if (_currentLocation == null)
+			{
+				//_locationText.Text = "Unable to determine your location. Try again in a short while.";
+				LOG ("Unable to determine your location. Try again in a short while.");
+			}
+			else
+			{
+				LOG (string.Format("{0:f6},{1:f6}", _currentLocation.Latitude, _currentLocation.Longitude));
+				//_locationText.Text = string.Format("{0:f6},{1:f6}", _currentLocation.Latitude, _currentLocation.Longitude);
+				Address address = await ReverseGeocodeCurrentLocation();
+				syncAddressSoD(address);
+			}
+		}
+
+		void syncAddressSoD(Address address)
+		{
+			if (address != null)
+			{
+				StringBuilder deviceAddress = new StringBuilder();
+				for (int i = 0; i < address.MaxAddressLineIndex; i++)
+				{
+					deviceAddress.AppendLine(address.GetAddressLine(i));
+				}
+				// Remove the last comma from the end of the address.
+				this.LOG (deviceAddress.ToString());
+			}
+			else
+			{
+				//_addressText.Text = "Unable to determine the address. Try again in a few minutes.";
+				this.LOG("Unable to determine the address. Try again in a few minutes.");
+			}
+		}
+		async Task<Address> ReverseGeocodeCurrentLocation()
+		{
+			Geocoder geocoder = new Geocoder(this);
+			IList<Address> addressList =
+				await geocoder.GetFromLocationAsync(_currentLocation.Latitude, _currentLocation.Longitude, 10);
+
+			Address address = addressList.FirstOrDefault();
+			return address;
+		}
+
+
+		public void OnProviderDisabled(string provider) {}
+
+		public void OnProviderEnabled(string provider) {}
+
+		public void OnStatusChanged(string provider, Availability status, Bundle extras) {}
+
+		public void LOG(string  logstring){
+			Log.Debug(tag, logstring);
+			Console.WriteLine (logstring);
+		}
 	}
 	class TimerExampleState {
 		public int counter = 0;
 		public Timer tmr;
 	}
+
 }
 
 

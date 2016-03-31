@@ -16,7 +16,8 @@ namespace HelloGlassWorld
 	[MetaData ("com.google.android.glass.VoiceTrigger", Resource = "@xml/voicetriggerstart")]
 	public class MainActivity : Activity
 	{
-		SoD sod = new SoD("10.13.65.16",3000,AndroidDeviceType.Glass);
+		string serverIP = "192.168.0.106";
+		SoD sod = new SoD(serverIP,3000,AndroidDeviceType.Glass);
 		// The project requires the Google Glass Component from
 		// https://components.xamarin.com/view/googleglass
 		// so make sure you add that in to compile succesfully.
