@@ -26,7 +26,7 @@ using SoD_Xamarin_AndroidLibrary;
 namespace DDWatch
 {
 	[Activity (Label = "DDWatch", MainLauncher = true, Icon = "@mipmap/icon")]
-	public class MainActivity : Activity,ISensorEventListener,ILocationListener
+	public class MainActivity : Activity,ISensorEventListener//,ILocationListener
 	{
 		//int count = 1;
 		public SoD SoD;
@@ -39,14 +39,15 @@ namespace DDWatch
 		string serverIP = "192.168.0.106";
 
 		//GEO location
-		Location _currentLocation;
-		LocationManager _locationManager;
+		//Location _currentLocation;
+		//LocationManager _locationManager;
 
-		string _locationProvider;
+		//string _locationProvider;
 
 		protected override void OnCreate (Bundle bundle)
 		{
 			base.OnCreate (bundle);
+
 
 			// Set our view from the "main" layout resource
 			SetContentView (Resource.Layout.Main);
@@ -84,7 +85,7 @@ namespace DDWatch
 
 		}
 		// Mark: Setup Location
-		void InitializeLocationManager(){
+		/*void InitializeLocationManager(){
 			_locationManager = (LocationManager) GetSystemService(LocationService);
 			Criteria criteriaForLocationService = new Criteria
 			{
@@ -101,16 +102,17 @@ namespace DDWatch
 				_locationProvider = string.Empty;
 			}
 			Log.Debug(tag, "Using " + _locationProvider + ".");
-		}
+		}*/
 		//private ScheduledThreadPoolExecutor mScheduler;
 		TimerExampleState s;
 		protected override void OnResume ()
 		{
 			base.OnResume ();
 			LOG ("starting up !");
+			//this.SoD.register ();
 			// Location
-			InitializeLocationManager();
-			_locationManager.RequestLocationUpdates(_locationProvider, 0, 0, this);
+			//InitializeLocationManager();
+			//_locationManager.RequestLocationUpdates(_locationProvider, 0, 0, this);
 			// SoD
 			this.SoD = new SoD (serverIP,3000,AndroidDeviceType.Watch);
 			// Pulse Thread
@@ -127,9 +129,9 @@ namespace DDWatch
 			s.counter++;
 			Console.WriteLine("{0} Checking Status {1}.",DateTime.Now.TimeOfDay, s.counter);
 			// get data of interest
-			SoD.sendUpdate (117,currentHearBeat);
-			if (s.counter == 5){
+			if (s.counter == 5) {
 				//Console.WriteLine("disposing of timer...");
+
 				if (sensor_manager.RegisterListener (this, sensor, SensorDelay.Normal)) {
 					Log.Info (tag, "Successfully registered for heartrate events");
 					Console.WriteLine ("Successfully registered for the heartrate events");
@@ -139,9 +141,8 @@ namespace DDWatch
 					Log.Info (tag, "something is wrong with reading Heartrate sensor");
 					Console.WriteLine ("something is wrong with reading heartrate sensors");
 				}
-				Console.WriteLine ("5");
-			}
-			if (s.counter == 10) {
+				SoD.sendUpdate (117,currentHearBeat);
+			} else if (s.counter == 10) {
 				Log.Info (tag, "Unregister HeartRate sensor");
 				Console.WriteLine ("Unregister HeartRate sensor");
 				sensor_manager.UnregisterListener (this);
@@ -150,6 +151,8 @@ namespace DDWatch
 				// reset counter 
 				s.counter = 0;
 				Console.WriteLine ("10");
+			} else if (s.counter > 5 && s.counter < 10) {
+				SoD.sendUpdate (117,currentHearBeat);
 			}
 		}
 
@@ -162,25 +165,25 @@ namespace DDWatch
 			// SOD
 			this.SoD.disconnect();
 			// Location
-			_locationManager.RemoveUpdates(this);
+			//_locationManager.RemoveUpdates(this);
 			// Heartrate
 			sensor_manager.UnregisterListener (this);
 			Console.WriteLine ("Unregistered for sensor events");
 			Log.Info (tag, "Unregistered for sensor events");
-			s.tmr.Dispose();
-			s.tmr = null;
 		}
 
 		private float[] array = new float[0];
 		public float currentHearBeat = 0;
 		public void OnSensorChanged(SensorEvent e)
 		{
-			Log.Info (tag, e.Values [0] + " - " +(int)e.Timestamp);
-			Console.WriteLine (String.Join("-",array) + " - " + (int)e.Timestamp);
-			if (e.Values [0] != currentHearBeat) {
-				currentHearBeat = e.Values [0];
-				button.Text = currentHearBeat.ToString();
+			lock (_syncLock) {
+				Log.Info (tag, e.Values [0] + " - " + (int)e.Timestamp);
+				Console.WriteLine (String.Join ("-", array) + " - " + (int)e.Timestamp);
+				if (e.Values [0] != currentHearBeat) {
+					currentHearBeat = e.Values [0];
+					button.Text = currentHearBeat.ToString ();
 
+				}
 			}
 		}
 
@@ -195,7 +198,7 @@ namespace DDWatch
 		}
 
 		// MARK: Location delegates
-		public async void OnLocationChanged(Location location) {
+		/*public async void OnLocationChanged(Location location) {
 			_currentLocation = location;
 			if (_currentLocation == null)
 			{
@@ -245,7 +248,7 @@ namespace DDWatch
 		public void OnProviderEnabled(string provider) {}
 
 		public void OnStatusChanged(string provider, Availability status, Bundle extras) {}
-
+	*/
 		public void LOG(string  logstring){
 			Log.Debug(tag, logstring);
 			Console.WriteLine (logstring);

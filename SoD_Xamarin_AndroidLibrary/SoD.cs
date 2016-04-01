@@ -9,33 +9,46 @@ namespace SoD_Xamarin_AndroidLibrary
 	{
 		public SocketIO socket;	
 		public AndroidDeviceType deviceType;
+		public bool registered;
 		public SoD (string host,int port, AndroidDeviceType type)
 		{	
-			socket = new SocketIO (host, port);
+			if (this.socket != null) {
+				this.socket.Disconnect ();
+				this.socket.Dispose ();
+			}
+			this.socket = new SocketIO (host, port);
 			this.deviceType = type;
 			register ();
 		}
 		public async void register(){
-			var connectionStatus = await socket.ConnectAsync ();
-			if (connectionStatus == SocketIO.ConnectionStatus.Connected) {
-				switch (this.deviceType) {
-				case AndroidDeviceType.Glass:
-					registerAsGoogleGlass ();
-					break;
-				case AndroidDeviceType.Watch:
-					registerAsAndroidWatch();
-					break;
-				default:
-					Console.WriteLine ("Unkonwn type: " + this.deviceType);
-					break;
-				}
+			if (!this.socket.Connected) {
+				var connectionStatus = await socket.ConnectAsync ();
+				if (connectionStatus == SocketIO.ConnectionStatus.Connected) {
+					switch (this.deviceType) {
+					case AndroidDeviceType.Glass:
+						registerAsGoogleGlass ();
+						break;
+					case AndroidDeviceType.Watch:
+						registerAsAndroidWatch ();
+						break;
+					default:
+						Console.WriteLine ("Unkonwn type: " + this.deviceType);
+						break;
+					}
 
+				} else {
+					Console.WriteLine ("Websocket failed to connect to the server");
+				}
 			} else {
-				Console.WriteLine ("Websocket failed to connect to the server");
+				Console.WriteLine ("Socket is connected. No need to register.");
 			}
+
 		}
 		public void disconnect(){
-			this.socket.Disconnect();
+			if (this.socket.Connected && this.socket!=null) {
+				this.registered = false;
+				this.socket.Disconnect();
+			}
 		}
 		public void test(){
 			//var list = new object [] { 1, "randomString", 3.4f, new Foo () { Bar = "baz"} };
@@ -51,6 +64,7 @@ namespace SoD_Xamarin_AndroidLibrary
 					depth = 0.1,
 					stationary = false
 				} });
+			registered = true;
 		}
 		public void registerAsGoogleGlass(){
 			socket.Emit ("registerDevice", new Object[] {new GoogleGlass () {
@@ -61,14 +75,17 @@ namespace SoD_Xamarin_AndroidLibrary
 					depth = 0.1,
 					stationary = false
 				} });
+			this.registered = true;
 		}
 		public void sendUpdate(int personID,float heartbeat){
-			Console.WriteLine (personID+" - "+heartbeat);
-			socket.Emit ("ERPersonUpdate", new Object[]{new ERPersonUpdateEncap(){
-					heartbeat = heartbeat,
-					personID = personID
+			if (this.socket.Connected&&this.registered) {
+				Console.WriteLine (personID+" - "+heartbeat);
+				socket.Emit ("ERPersonUpdate", new Object[]{new ERPersonUpdateEncap(){
+						heartbeat = heartbeat,
+						personID = personID
+					}
+				});
 			}
-			});
 		}
 	}
 
