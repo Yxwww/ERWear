@@ -19,6 +19,18 @@ using Android.Hardware;
 using Android.Support.V4.View;
 using Android.Locations;
 
+// Google play API
+using Android.Gms.Common.Apis;
+using Android.Gms.Location;
+using Android.Gms.Wearable;
+//using Android.Gms;
+using Android.Gms.Common.Data;
+using Android.Gms.Common;
+using Android.App;
+using Android.Gms.Maps;
+using Android.Gms.Maps.Model;
+
+
 using Java.Util.Concurrent;
 using SoD_Xamarin_AndroidLibrary;
 
@@ -26,7 +38,7 @@ using SoD_Xamarin_AndroidLibrary;
 namespace DDWatch
 {
 	[Activity (Label = "DDWatch", MainLauncher = true, Icon = "@mipmap/icon")]
-	public class MainActivity : Activity,ISensorEventListener//,ILocationListener
+	public class MainActivity : Activity,ISensorEventListener,GoogleApiClient.IConnectionCallbacks, GoogleApiClient.IOnConnectionFailedListener//,ILocationListener
 	{
 		//int count = 1;
 		public SoD SoD;
@@ -38,12 +50,35 @@ namespace DDWatch
 		//private ScheduledExecutorService mScheduler; 
 		string serverIP = "192.168.0.106";
 
+
+		// START: Location Services 
+		public void OnConnected (Bundle bundle)
+		{
+
+		}
+		public void OnDisconnected (Bundle bundle)
+		{
+
+		}
+		public void OnConnectionFailed (Bundle bundle)
+		{
+
+		}
+		public void OnConnectionSuspended (int p0)
+		{
+			//DataLayerListenerService.LOGD (Tag, "OnConnectionSuspended(): Connection to Google API clinet was suspended");
+		}
+
+		public void OnConnectionFailed (Android.Gms.Common.ConnectionResult result)
+		{
+			//DataLayerListenerService.LOGD (Tag, "OnConnectionFailed(): Failed to connect, with result: " + result);
+		}
 		//GEO location
 		//Location _currentLocation;
 		//LocationManager _locationManager;
 
 		//string _locationProvider;
-
+	
 		protected override void OnCreate (Bundle bundle)
 		{
 			base.OnCreate (bundle);
@@ -60,15 +95,12 @@ namespace DDWatch
 			// UI Delegate
 			var v = FindViewById<WatchViewStub> (Resource.Id.watch_view_stub);
 			button = FindViewById<Button> (Resource.Id.myButton);
-
-
-
+			//this.SoD = new SoD (serverIP,3000,AndroidDeviceType.Watch);
 			v.LayoutInflated += delegate {
 
 				// Get our button from the layout resource,
 				// and attach an event to it
 				button = FindViewById<Button> (Resource.Id.myButton);
-
 				button.Click += delegate {
 					/*SoD.test();
 					var notification = new NotificationCompat.Builder (this)
@@ -79,9 +111,11 @@ namespace DDWatch
 
 					var manager = NotificationManagerCompat.From (this);
 					manager.Notify (1, notification);*/
+					//this.SoD = new SoD (serverIP,3000,AndroidDeviceType.Watch);
 					button.Text = "Check Notification!";
 				};
 			};
+			//this.Window.AddFlags (WindowManagerFlags.KeepScreenOn);
 
 		}
 		// Mark: Setup Location
@@ -114,12 +148,15 @@ namespace DDWatch
 			//InitializeLocationManager();
 			//_locationManager.RequestLocationUpdates(_locationProvider, 0, 0, this);
 			// SoD
+
 			this.SoD = new SoD (serverIP,3000,AndroidDeviceType.Watch);
 			// Pulse Thread
-			s = new TimerExampleState();
-			TimerCallback timerCallback = new TimerCallback (readHRData);
-			Timer timer = new Timer (timerCallback, s,1000 , 1000);
-			s.tmr = timer;
+			if (s == null) {
+				s = new TimerExampleState();
+				TimerCallback timerCallback = new TimerCallback (readHRData);
+				Timer timer = new Timer (timerCallback, s,1000 , 1000);
+				s.tmr = timer;
+			}
 		}
 
 
@@ -129,7 +166,7 @@ namespace DDWatch
 			s.counter++;
 			Console.WriteLine("{0} Checking Status {1}.",DateTime.Now.TimeOfDay, s.counter);
 			// get data of interest
-			if (s.counter == 5) {
+			if (s.counter == 3) {
 				//Console.WriteLine("disposing of timer...");
 
 				if (sensor_manager.RegisterListener (this, sensor, SensorDelay.Normal)) {
@@ -151,7 +188,7 @@ namespace DDWatch
 				// reset counter 
 				s.counter = 0;
 				Console.WriteLine ("10");
-			} else if (s.counter > 5 && s.counter < 10) {
+			} else if (s.counter > 3 && s.counter < 10) {
 				SoD.sendUpdate (117,currentHearBeat);
 			}
 		}
@@ -186,7 +223,6 @@ namespace DDWatch
 				}
 			}
 		}
-
 		public void OnAccuracyChanged(Sensor sensor,int accuracy)
 		{
 			
@@ -196,6 +232,9 @@ namespace DDWatch
 		{
 
 		}
+		// END: sensor delegate
+
+
 
 		// MARK: Location delegates
 		/*public async void OnLocationChanged(Location location) {

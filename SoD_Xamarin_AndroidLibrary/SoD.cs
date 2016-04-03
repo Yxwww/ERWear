@@ -10,6 +10,7 @@ namespace SoD_Xamarin_AndroidLibrary
 		public SocketIO socket;	
 		public AndroidDeviceType deviceType;
 		public bool registered;
+		public int uniqueDeviceID;
 		public SoD (string host,int port, AndroidDeviceType type)
 		{	
 			if (this.socket != null) {
@@ -18,6 +19,14 @@ namespace SoD_Xamarin_AndroidLibrary
 			}
 			this.socket = new SocketIO (host, port);
 			this.deviceType = type;
+			//Set listeners
+			socket.On("assignUniqueID", (data) => {               //call this lambda when a message named "MessageReceived"
+				Console.WriteLine (data ["uniqueDeviceID"]);     //is emitted from the server
+				/*var obj = (JObject)JsonConvert.DeserializeObject(data);
+				Type type = typeof(int);
+				var i1 = System.Convert.ChangeType(obj["id"].ToString(), type);*/
+				this.uniqueDeviceID =  Int32.Parse(data["uniqueDeviceID"].ToString());
+			});
 			register ();
 		}
 		public async void register(){
