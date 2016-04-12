@@ -116,5 +116,9 @@
       <Project>{30630505-C9C1-4BB0-ABF2-3A93475EEDBA}</Project>
       <Name>SoD_Xamarin_AndroidLibrary</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Xamarin.Socket.IO\Xamarin.Socket.IO.csproj">
+      <Project>{282eb56c-e471-4565-b130-ac9b99196301}</Project>
+      <Name>Xamarin.Socket.IO</Name>
+    </ProjectReference>
   </ItemGroup>
 </Project>
