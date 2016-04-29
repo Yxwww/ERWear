@@ -48,7 +48,7 @@ namespace DDWatch
 		static readonly object _syncLock = new object();
 		Button button;
 		//private ScheduledExecutorService mScheduler; 
-		string serverIP = "192.168.0.106";
+		string serverIP = "192.168.0.109";
 
 
 		// START: Location Services 
@@ -200,6 +200,7 @@ namespace DDWatch
 			s.tmr.Dispose();
 			s.tmr = null;
 			// SOD
+            
 			this.SoD.disconnect();
 			// Location
 			//_locationManager.RemoveUpdates(this);

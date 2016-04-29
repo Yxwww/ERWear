@@ -1,13 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DDWatch", "DDWatch\DDWatch.csproj", "{C2C0740A-A1B4-438B-B6CD-9B1F27EFD1B3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ERWearWatch", "DDWatch\ERWearWatch.csproj", "{C2C0740A-A1B4-438B-B6CD-9B1F27EFD1B3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SoD_Xamarin_AndroidLibrary", "SoD_Xamarin_AndroidLibrary\SoD_Xamarin_AndroidLibrary.csproj", "{30630505-C9C1-4BB0-ABF2-3A93475EEDBA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xamarin.Socket.IO", "Xamarin.Socket.IO\Xamarin.Socket.IO.csproj", "{282EB56C-E471-4565-B130-AC9B99196301}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HelloGlassWorld", "HelloGlassWorld\HelloGlassWorld.csproj", "{5295C1E5-2701-4012-B4CE-A4D1374F05C3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ERWearGlass", "HelloGlassWorld\ERWearGlass.csproj", "{5295C1E5-2701-4012-B4CE-A4D1374F05C3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
